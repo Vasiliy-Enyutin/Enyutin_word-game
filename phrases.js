@@ -66,6 +66,9 @@ function checkName()
 
 function configure() 
 {
+    if (localStorage.getItem('usersScores') != null)
+        usersScores = localStorage.getItem('usersScores');
+
     username = localStorage.getItem('currentUsername');
     gameOrderArray = generateArrayRandomNumbers(0, 2);
     dynamicZoneElement = document.getElementById("dynamicZone");
@@ -197,7 +200,7 @@ function updateScore()
 {
     globalUserPoints += currentUserPoints;
     localStorage.setItem(username + 'globalUserPoints', globalUserPoints)
-    
+
     usersScores.push({key: username, value: globalUserPoints});
     localStorage.setItem("usersScores", usersScores);
 }
@@ -297,7 +300,20 @@ function exit()
 
 function openRatingTable()
 {
-    
+    document.location.href = "rating.html";
+}
+
+function showRatingTable()
+{
+    setRatingTable();
+}
+
+function setRatingTable()
+{
+    firstSpan = document.getElementById("first")
+    secondSpan = document.getElementById("second")
+    secondSpan = document.getElementById("third")
+
 }
 
 // Генерация случайных неповторяющихся чисел в заданном промежутке
@@ -328,7 +344,7 @@ function times(numb, int_id)
     clearInterval(int_id);
     alert("Ты проиграл. -500 очков. Нажми 'ОК', чтобы начать заново");
     currentUserPoints -= losePenalty;
-    updatePoints();
+    updateScore();
     document.location.href = "phrases.html";
   }
   return "Оставшееся время: " + _ + " секунд";

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enyutin_word-game</title>
+    <link rel="stylesheet" href="phrases.css">
+    <script src="phrases.js"></script>
+</head>
+<body onload="showRatingTable()">
+    <div class="mainContainer">
+        <div id="dynamicZone">
+            <div id="containerGUI">
+                <form action="phrases.html">
+                    <button>К игре</button>
+                </form>
+                <button type="button" onclick="exit()">
+                    Выход
+                </button>
+            </div>
+            <div align="center">
+                <span>Рейтинг</span><br/>
+                <span id="first">Первое место </span><br/>
+                <span id="second">Второе место</span><br/>
+                <span id="third">Третье место</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
