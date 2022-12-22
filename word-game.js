@@ -44,8 +44,8 @@ var secondClickedPhrase;    // вторая нажатая фраза
 var globalPointsContainer;           // контейнер для общего количества очков
 var pointsCounterContainer;          // контейнер для счётчика очков
 var gameTaskContainer;               // контейнер для хранения задания
-var globalUserPoints;     // сумма очков пользователя за всё время
-var currentUserPoints;  // текущее количество очков пользователя за одну игру
+var globalUserPoints = 0;     // сумма очков пользователя за всё время
+var currentUserPoints = 0;  // текущее количество очков пользователя за одну игру
 const pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
 const losePenalty = 500;    // штраф за проигрыш
 var username;   // Имя пользователя
@@ -199,6 +199,7 @@ function deleteMatchedPhrases()
 
 function updateScore()
 {
+    username = localStorage.getItem('currentUsername');
     globalUserPoints += currentUserPoints;
     localStorage.setItem(username + 'globalUserPoints', globalUserPoints)
 
@@ -338,9 +339,18 @@ function showRatingTable()
             username3 = key;
         }
     }
-    thirdSpan.innerHTML = username3 + " имеет " + max3 + " очков";
-    secondSpan.innerHTML = username2 + " имеет " + max2 + " очков";
-    firstSpan.innerHTML = username1 + " имеет " + max1 + " очков";
+    if (max3 != -99999)
+        thirdSpan.innerHTML = username3 + " имеет " + max3 + " очков";
+    else
+        thirdSpan.innerHTML = '-';
+    if (max2 != -99999)
+        secondSpan.innerHTML = username2 + " имеет " + max2 + " очков";
+    else
+        secondSpan.innerHTML = '-';
+    if (max1 != -99999)
+        firstSpan.innerHTML = username1 + " имеет " + max1 + " очков";
+    else
+        firstSpan.innerHTML = '-';
 }
 
 // Генерация случайных неповторяющихся чисел в заданном промежутке
