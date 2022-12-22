@@ -42,6 +42,12 @@ var globalUserPoints;     // сумма очков пользователя за
 var currentUserPoints;  // текущее количество очков пользователя за одну игру
 var pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
 
+function checkName()
+{
+    if(document.getElementById("username").value != "")
+        document.location.href = "phrases.html";
+}
+
 function configure() 
 {
     gameOrderArray = generateArrayRandomNumbers(0, 2);
