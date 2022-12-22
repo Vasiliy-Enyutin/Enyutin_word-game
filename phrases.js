@@ -27,35 +27,42 @@ const antonymsDictionary =
     "Мало": "Много"
 };
 
-var currentGameStep = 0;    // Какая по счёту сейчас игра заупщена (0, 1 или 2)
-var gameOrderArray = [];
-var currentGameDictionary = [];
-var spawnedPhrases = [];
-var containerGui;
-var dynamicZoneElement;
-var firstClickedPhrase;
-var secondClickedPhrase;
-var pointsCounter;
-var gameTask;
-var currentUserPoints = 0;
-var pointsIncreaser = 100;
+var currentGameStep = 0;    // какая по счёту сейчас игра заупщена (0, 1 или 2)
+var gameOrderArray = [];    // случайный порядок цифр 0-2, чтобы игра рандомилась
+var currentGameDictionary = [];     // текущий словарь слов (зависит от игры)
+var spawnedPhrases = [];    // созданные фразы
+var containerGui;   // хранятся кнопки
+var dynamicZoneElement;     // игровая зона
+var firstClickedPhrase;     // первая нажатая фраза
+var secondClickedPhrase;    // вторая нажатая фраза
+var pointsCounter;          // контейнер для счётчика очков
+var gameTask;               // контейнер для хранения задания
+var currentUserPoints = 0;  // текущее количество очков пользователя за одну игру
+var pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
 
 function configure() 
 {
+    gameOrderArray = generateArrayRandomNumbers(0, 2);
     dynamicZoneElement = document.getElementById("dynamicZone");
     containerGui = document.getElementById("containerGUI")
     pointsCounter = document.getElementById("pointsCounter")
     gameTask = document.getElementById("gameTask")
+    createPointsCounter();
+    createGameTask();
+    startGame();
+}
+
+function startGame()
+{
     currentGameDictionary = chooseGameDictionary();
     spawnPhrases(currentGameDictionary);
-    createGameTask();
     updateGameTask();
-    createPointsCounter();
+    currentUserPoints = 0;
+    updatePointsCounter();
 }
 
 function chooseGameDictionary()
 {
-    gameOrderArray = generateArrayRandomNumbers(0, 2);
     if (gameOrderArray[currentGameStep] == 0)
         return synonymsDictionary;
     else if (gameOrderArray[currentGameStep] == 1)
@@ -119,16 +126,16 @@ function compareClickedPhrases()
 
     if (matched == true)
     {
-        deleteMatchedPhrases();
         currentUserPoints += pointsIncreaser;
+        updatePointsCounter();
+        deleteMatchedPhrases();
     }
     else
     {
         currentUserPoints -= pointsIncreaser;
+        updatePointsCounter();
+        clearClickedPhrases();
     }
-
-    updatePointsCounter();
-    clearClickedPhrases();
 }
 
 function deleteMatchedPhrases()
@@ -143,6 +150,14 @@ function deleteMatchedPhrases()
     spawnedPhrases.find(phrase => phrase.element == firstClickedPhrase);
     firstClickedPhrase.element.remove();
     secondClickedPhrase.element.remove();
+
+    clearClickedPhrases();
+
+    if (spawnedPhrases.length == 0)
+    {
+        currentGameStep++;
+        startGame();
+    }
 }
 
 function clearClickedPhrases()
