@@ -30,7 +30,7 @@ const antonymsDictionary =
 var usersScores = {};
 
 // Таймер
-const timeLimitInSeconds = 2000;
+const timeLimitInSeconds = 25;
 var currentTimerId;
 
 var currentGameStep = 0;    // какая по счёту сейчас игра заупщена (0, 1 или 2)
@@ -52,7 +52,6 @@ var username;   // Имя пользователя
 
 function checkName()
 {
-    // localStorage.clear();
     let tempUsername = document.getElementById("username").value;
     if(tempUsername != "")
     {
@@ -68,7 +67,6 @@ function checkName()
 function configure() 
 {
     let tempUsersScores = JSON.parse(localStorage.getItem('usersScores'));
-    console.log(tempUsersScores);
     if (tempUsersScores != null)
         usersScores = tempUsersScores;
 
@@ -313,17 +311,36 @@ function showRatingTable()
     thirdSpan = document.getElementById("third");
 
     usersScores = JSON.parse(localStorage.getItem('usersScores'));
-    let values = [];
+    
+    let max1 = -99999; let max2 = -99999; let max3 = -99999;
+    let username1; let username2; let username3;
     for (let key in usersScores)
     {
-        if (key != undefined || key != null)
-            values.push(usersScores[key])
+        if (usersScores[key] >= max1)
+        {
+            max3 = max2;
+            username3 = username2;
+            max2 = max1;
+            username2 = username1;
+            max1 = usersScores[key];
+            username1 = key;
+        }
+        else if (usersScores[key] >= max2)
+        {
+            max3 = max2;
+            username3 = username2;
+            max2 = usersScores[key];
+            username2 = key;
+        }
+        else if (usersScores[key] >= max3)
+        {
+            max3 = usersScores[key];
+            username3 = key;
+        }
     }
-
-    let threeLargestValuesAscending = findThreeLargestNumbers(values);
-    thirdSpan.innerHTML = getKeyByValue(usersScores, threeLargestValuesAscending[0]) + " имеет " + threeLargestValuesAscending[0] + " очков";
-    secondSpan.innerHTML = getKeyByValue(usersScores, threeLargestValuesAscending[1]) + " имеет " + threeLargestValuesAscending[1] + " очков";
-    firstSpan.innerHTML = getKeyByValue(usersScores, threeLargestValuesAscending[2]) + " имеет " + threeLargestValuesAscending[2] + " очков";
+    thirdSpan.innerHTML = username3 + " имеет " + max3 + " очков";
+    secondSpan.innerHTML = username2 + " имеет " + max2 + " очков";
+    firstSpan.innerHTML = username1 + " имеет " + max1 + " очков";
 }
 
 // Генерация случайных неповторяющихся чисел в заданном промежутке
@@ -372,48 +389,6 @@ function interval(int_id, numb)
 function wait(milliseconds) 
 {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
-
-// Поиск трёх наибольших чисел в массиве
-function findThreeLargestNumbers(array)
-{
-    const largeThree = [null, null, null];
-    for (const num of array)
-    {
-        updateLargest(largeThree, num);
-    }
-    return largeThree;
-}
-
-function updateLargest(largeThree, num)
-{
-    if (largeThree[2] === null || num > largeThree[2])
-    {
-        shiftAndUpdate(largeThree, num, 2);
-    }
-    else if (largeThree[1] === null || num > largeThree[1])
-    {
-        shiftAndUpdate(largeThree, num, 1);
-    }
-    else if (largeThree[0] === null || num > largeThree[0])
-    {
-        shiftAndUpdate(largeThree, num, 0);
-    }
-}
-
-function shiftAndUpdate(array, num, idx)
-{
-    for (let i = 0; i <= idx; i++)
-    {
-        if (i === idx)
-        {
-            array[i] = num;
-        }
-        else
-        {
-            array[i] = array[i + 1];
-        }
-    }
 }
 
 function getKeyByValue(object, value) 
