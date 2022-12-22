@@ -56,7 +56,7 @@ function checkName()
     if(tempUsername != "")
     {
         localStorage.setItem('currentUsername', tempUsername);
-        document.location.href = "phrases.html";
+        document.location.href = "word-game.html";
     }
     else
     {
@@ -372,7 +372,7 @@ function times(numb, int_id)
     alert("Ты проиграл. -500 очков. Нажми 'ОК', чтобы начать заново");
     currentUserPoints -= losePenalty;
     updateScore();
-    document.location.href = "phrases.html";
+    document.location.href = "word-game.html";
   }
   return "Оставшееся время: " + _ + " секунд";
 }
