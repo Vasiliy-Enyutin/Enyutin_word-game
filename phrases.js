@@ -35,9 +35,11 @@ var containerGui;   // хранятся кнопки
 var dynamicZoneElement;     // игровая зона
 var firstClickedPhrase;     // первая нажатая фраза
 var secondClickedPhrase;    // вторая нажатая фраза
-var pointsCounter;          // контейнер для счётчика очков
-var gameTask;               // контейнер для хранения задания
-var currentUserPoints = 0;  // текущее количество очков пользователя за одну игру
+var globalPointsContainer;           // контейнер для общего количества очков
+var pointsCounterContainer;          // контейнер для счётчика очков
+var gameTaskContainer;               // контейнер для хранения задания
+var globalUserPoints;     // сумма очков пользователя за всё время
+var currentUserPoints;  // текущее количество очков пользователя за одну игру
 var pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
 
 function configure() 
@@ -45,8 +47,10 @@ function configure()
     gameOrderArray = generateArrayRandomNumbers(0, 2);
     dynamicZoneElement = document.getElementById("dynamicZone");
     containerGui = document.getElementById("containerGUI")
-    pointsCounter = document.getElementById("pointsCounter")
-    gameTask = document.getElementById("gameTask")
+    globalPointsContainer = document.getElementById("globalPointsContainer")
+    pointsCounterContainer = document.getElementById("pointsCounterContainer")
+    gameTaskContainer = document.getElementById("gameTaskContainer")
+    createGlobalPoints();
     createPointsCounter();
     createGameTask();
     startGame();
@@ -54,6 +58,12 @@ function configure()
 
 function startGame()
 {
+    console.log(localStorage.getItem('globalUserPoints'));
+    if (localStorage.getItem('globalUserPoints') != null)
+        globalUserPoints = +localStorage.getItem('globalUserPoints')
+    else
+        globalUserPoints = 0;
+    updateGlobalPoints();
     currentGameDictionary = chooseGameDictionary();
     spawnPhrases(currentGameDictionary);
     updateGameTask();
@@ -155,6 +165,8 @@ function deleteMatchedPhrases()
 
     if (spawnedPhrases.length == 0)
     {
+        globalUserPoints += currentUserPoints;
+        localStorage.setItem('globalUserPoints', globalUserPoints)
         currentGameStep++;
         startGame();
     }
@@ -197,31 +209,42 @@ class Phrase
     }
 }
 
+function createGlobalPoints()
+{
+    text = document.createTextNode("Общее количество очков: " + globalUserPoints);
+    globalPointsContainer.appendChild(text);
+}
+
+function updateGlobalPoints()
+{
+    globalPointsContainer.innerText = "Очки: " + globalUserPoints;
+}
+
 function createPointsCounter() 
 {
     text = document.createTextNode("Очки: " + currentUserPoints);
-    pointsCounter.appendChild(text);
+    pointsCounterContainer.appendChild(text);
 }
 
 function updatePointsCounter()
 {
-    pointsCounter.innerText = "Очки: " + currentUserPoints;
+    pointsCounterContainer.innerText = "Очки: " + currentUserPoints;
 }
 
 function createGameTask()
 {
     text = document.createTextNode("Задание: ");
-    gameTask.appendChild(text);
+    gameTaskContainer.appendChild(text);
 }
 
 function updateGameTask()
 {
     if (gameOrderArray[currentGameStep] == 0)
-        gameTask.innerText = "Задание: выбрать синонимы"
+        gameTaskContainer.innerText = "Задание: выбрать синонимы"
     if (gameOrderArray[currentGameStep] == 1)
-        gameTask.innerText = "Задание: выбрать ассоциации"
+        gameTaskContainer.innerText = "Задание: выбрать ассоциации"
     if (gameOrderArray[currentGameStep] == 2)
-        gameTask.innerText = "Задание: выбрать антонимы"
+        gameTaskContainer.innerText = "Задание: выбрать антонимы"
 }
 
 // function hidePointsCounter() 

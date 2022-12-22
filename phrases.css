@@ -30,14 +30,21 @@ body
     justify-content: center;
 }
 
-#gameTask
+#gameTaskContainer
 {
     display: flex;
     justify-content: center;
     background-color: #F4A460;
 }
 
-#pointsCounter
+#pointsCounterContainer
+{
+    display: flex;
+    justify-content: center;
+    background-color: #F4A460;	
+}
+
+#globalPointsContainer
 {
     display: flex;
     justify-content: center;
