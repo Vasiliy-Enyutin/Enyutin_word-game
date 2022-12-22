@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enyutin_word-game</title>
+    <link rel="stylesheet" href="phrases.css">
+    <script src="phrases.js"></script>
+</head>
+<body onload="configure()">
+    <div class="mainContainer">
+        <div id="containerGUI">
+            <button id="createButton" type="button" onclick="spawnPhrase()">
+                Начать заново
+            </button>
+            <button id="colorButton" type="button" onclick="colorUnsortedPhrases()">
+                Меню
+            </button>
+            <div id="pointsCounter"></div>
+        </div>
+        <div id="dynamicZone"></div>
+    </div>
+</body>
+</html>
