@@ -1,6 +1,7 @@
 html, body, .mainContainer 
 {
     height:100%;
+    font-size: 16px;
 }
 body 
 {
@@ -51,6 +52,13 @@ body
     background-color: #F4A460;	
 }
 
+#timer
+{
+    display: flex;
+    justify-content: center;
+    background-color: #F4A460;	
+}
+
 .phrase 
 {
     width: 100px;
@@ -62,7 +70,7 @@ body
     align-items:center;
 
     transition: all .2s ease-in-out;
-    font-size: 12px;
+    font-size: 16px;
     border: solid;
     border-color: black;
     border-radius: 5px;

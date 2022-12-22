@@ -27,6 +27,10 @@ const antonymsDictionary =
     "Мало": "Много"
 };
 
+// Таймер
+const timeLimitInSeconds = 20;
+var currentTimerId;
+
 var currentGameStep = 0;    // какая по счёту сейчас игра заупщена (0, 1 или 2)
 var gameOrderArray = [];    // случайный порядок цифр 0-2, чтобы игра рандомилась
 var currentGameDictionary = [];     // текущий словарь слов (зависит от игры)
@@ -40,16 +44,27 @@ var pointsCounterContainer;          // контейнер для счётчик
 var gameTaskContainer;               // контейнер для хранения задания
 var globalUserPoints;     // сумма очков пользователя за всё время
 var currentUserPoints;  // текущее количество очков пользователя за одну игру
-var pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
+const pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
+const losePenalty = 500;    // штраф за проигрыш
+var username;   // Имя пользователя
 
 function checkName()
 {
-    if(document.getElementById("username").value != "")
+    let tempUsername = document.getElementById("username").value;
+    if(tempUsername != "")
+    {
+        localStorage.setItem('currentUsername', tempUsername);
         document.location.href = "phrases.html";
+    }
+    else
+    {
+        alert("Введите другое имя");
+    }
 }
 
 function configure() 
 {
+    username = localStorage.getItem('currentUsername');
     gameOrderArray = generateArrayRandomNumbers(0, 2);
     dynamicZoneElement = document.getElementById("dynamicZone");
     containerGui = document.getElementById("containerGUI")
@@ -62,16 +77,10 @@ function configure()
     startGame();
 }
 
-function login()
-{
-    
-}
-
 function startGame()
 {
-    console.log(localStorage.getItem('globalUserPoints'));
-    if (localStorage.getItem('globalUserPoints') != null)
-        globalUserPoints = +localStorage.getItem('globalUserPoints')
+    if (localStorage.getItem(username + 'globalUserPoints') != null)
+        globalUserPoints = +localStorage.getItem(username + 'globalUserPoints')
     else
         globalUserPoints = 0;
     updateGlobalPoints();
@@ -80,6 +89,7 @@ function startGame()
     updateGameTask();
     currentUserPoints = 0;
     updatePointsCounter();
+    interval("timer", timeLimitInSeconds);
 }
 
 function chooseGameDictionary()
@@ -176,11 +186,27 @@ function deleteMatchedPhrases()
 
     if (spawnedPhrases.length == 0)
     {
-        globalUserPoints += currentUserPoints;
-        localStorage.setItem('globalUserPoints', globalUserPoints)
-        currentGameStep++;
-        startGame();
+        updateScore();
+        startNextGame();
     }
+}
+
+function updateScore()
+{
+    globalUserPoints += currentUserPoints;
+    localStorage.setItem(username + 'globalUserPoints', globalUserPoints)
+}
+
+async function startNextGame()
+{
+    clearInterval(currentTimerId);
+    currentGameStep++;
+    if (currentGameStep > 2)    // Зацикливаю игру
+        currentGameStep = 0;
+
+    await wait(100);
+    alert("Вы победили и заработали " + currentUserPoints + " очков!");
+    startGame();
 }
 
 function clearClickedPhrases()
@@ -258,27 +284,18 @@ function updateGameTask()
         gameTaskContainer.innerText = "Задание: выбрать антонимы"
 }
 
-// function hidePointsCounter() 
-// {
-//     this.pointsCounterText.visible = false;
-// }
+function exit()
+{
+    updateScore();
+    document.location.href = "login.html";
+}
 
-// function hideTimer() 
-// {
-//     this.timerText.visible = false;
-// }
-
-// function isTimerEnded() 
-// {
-//     return this.totalTime - this.elapsedTime <= 0;
-// }
-
-// Генерация случайного неповторяющегося числа
+// Генерация случайных неповторяющихся чисел в заданном промежутке
 function generateArrayRandomNumbers(min, max)
 {
-    var totalNumbers        = max - min + 1,
-        arrayTotalNumbers   = [],
-        arrayRandomNumbers  = [],
+    var totalNumbers = max - min + 1,
+        arrayTotalNumbers = [],
+        arrayRandomNumbers = [],
         tempRandomNumber;
     while (totalNumbers--) {
         arrayTotalNumbers.push(totalNumbers + min);
@@ -290,4 +307,33 @@ function generateArrayRandomNumbers(min, max)
         arrayTotalNumbers.splice(tempRandomNumber, 1);
     }
     return arrayRandomNumbers;
+}
+
+// Таймер
+function times(numb, int_id) 
+{
+  var _ = numb;
+  if (_ <= 0) 
+  {
+    clearInterval(int_id);
+    alert("Ты проиграл. -500 очков. Нажми 'ОК', чтобы начать заново");
+    currentUserPoints -= losePenalty;
+    updatePoints();
+    document.location.href = "phrases.html";
+  }
+  return "Оставшееся время: " + _ + " секунд";
+}
+
+function interval(int_id, numb) 
+{
+  var span = document.getElementById(int_id);
+  currentTimerId = setInterval(function() 
+  {
+    span.innerHTML = times(numb--, currentTimerId);
+  }, 1000);
+}
+
+function wait(milliseconds) 
+{
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
