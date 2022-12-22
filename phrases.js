@@ -27,6 +27,8 @@ const antonymsDictionary =
     "Мало": "Много"
 };
 
+var usersScores = [];
+
 // Таймер
 const timeLimitInSeconds = 20;
 var currentTimerId;
@@ -195,6 +197,9 @@ function updateScore()
 {
     globalUserPoints += currentUserPoints;
     localStorage.setItem(username + 'globalUserPoints', globalUserPoints)
+    
+    usersScores.push({key: username, value: globalUserPoints});
+    localStorage.setItem("usersScores", usersScores);
 }
 
 async function startNextGame()
@@ -288,6 +293,11 @@ function exit()
 {
     updateScore();
     document.location.href = "login.html";
+}
+
+function openRatingTable()
+{
+    
 }
 
 // Генерация случайных неповторяющихся чисел в заданном промежутке
