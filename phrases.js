@@ -56,6 +56,11 @@ function configure()
     startGame();
 }
 
+function login()
+{
+    
+}
+
 function startGame()
 {
     console.log(localStorage.getItem('globalUserPoints'));
@@ -217,7 +222,7 @@ function createGlobalPoints()
 
 function updateGlobalPoints()
 {
-    globalPointsContainer.innerText = "Очки: " + globalUserPoints;
+    globalPointsContainer.innerText = "Общее количество очков: " + globalUserPoints;
 }
 
 function createPointsCounter() 
