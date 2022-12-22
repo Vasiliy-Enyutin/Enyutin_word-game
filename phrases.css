@@ -24,16 +24,24 @@ body
 
 #containerGUI 
 {
-    margin: auto;
-    background-color: #fbecb2;
+    background-color: #F4A460;
     align-items: center;
     display: flex;
     justify-content: center;
 }
 
+#gameTask
+{
+    display: flex;
+    justify-content: center;
+    background-color: #F4A460;
+}
+
 #pointsCounter
 {
     display: flex;
+    justify-content: center;
+    background-color: #F4A460;	
 }
 
 .phrase 

@@ -9,12 +9,34 @@ const synonymsDictionary =
     "Выговор": "Порицание"
 };
 
+const associationsDictionary = 
+{
+    "Тарелка": "Посуда",
+    "Корабль": "Море",
+    "Школа": "Урок",
+    "Подсолнух": "Жёлтый",
+    "Овощ": "Морковка"
+};
+
+const antonymsDictionary = 
+{
+    "Мир": "Война",
+    "Тепло": "Холодно",
+    "Свет": "Тьма",
+    "Громкий": "Тихий",
+    "Мало": "Много"
+};
+
+var currentGameStep = 0;    // Какая по счёту сейчас игра заупщена (0, 1 или 2)
+var gameOrderArray = [];
+var currentGameDictionary = [];
+var spawnedPhrases = [];
 var containerGui;
 var dynamicZoneElement;
-var spawnedPhrases = [];
 var firstClickedPhrase;
 var secondClickedPhrase;
 var pointsCounter;
+var gameTask;
 var currentUserPoints = 0;
 var pointsIncreaser = 100;
 
@@ -23,8 +45,25 @@ function configure()
     dynamicZoneElement = document.getElementById("dynamicZone");
     containerGui = document.getElementById("containerGUI")
     pointsCounter = document.getElementById("pointsCounter")
-    spawnPhrases(synonymsDictionary);
+    gameTask = document.getElementById("gameTask")
+    currentGameDictionary = chooseGameDictionary();
+    spawnPhrases(currentGameDictionary);
+    createGameTask();
+    updateGameTask();
     createPointsCounter();
+}
+
+function chooseGameDictionary()
+{
+    gameOrderArray = generateArrayRandomNumbers(0, 2);
+    if (gameOrderArray[currentGameStep] == 0)
+        return synonymsDictionary;
+    else if (gameOrderArray[currentGameStep] == 1)
+        return associationsDictionary;
+    else if (gameOrderArray[currentGameStep] == 2)
+        return antonymsDictionary;
+
+    return 0;
 }
 
 function onPhraseClick(phraseElement) 
@@ -69,11 +108,11 @@ function compareClickedPhrases()
     let firstPhraseText = firstClickedPhrase.element.innerText;
     let secondPhraseText = secondClickedPhrase.element.innerText;
     let matched = false;
-    if (firstPhraseText in synonymsDictionary && synonymsDictionary[firstPhraseText] == secondPhraseText)
+    if (firstPhraseText in currentGameDictionary && currentGameDictionary[firstPhraseText] == secondPhraseText)
     {
         matched = true;
     }
-    else if (secondPhraseText in synonymsDictionary && synonymsDictionary[secondPhraseText] == firstPhraseText)
+    else if (secondPhraseText in currentGameDictionary && currentGameDictionary[secondPhraseText] == firstPhraseText)
     {
         matched = true;
     }
@@ -145,13 +184,29 @@ class Phrase
 
 function createPointsCounter() 
 {
-    text = document.createTextNode("Points: " + currentUserPoints);
+    text = document.createTextNode("Очки: " + currentUserPoints);
     pointsCounter.appendChild(text);
 }
 
 function updatePointsCounter()
 {
-    pointsCounter.innerText = "Points: " + currentUserPoints;
+    pointsCounter.innerText = "Очки: " + currentUserPoints;
+}
+
+function createGameTask()
+{
+    text = document.createTextNode("Задание: ");
+    gameTask.appendChild(text);
+}
+
+function updateGameTask()
+{
+    if (gameOrderArray[currentGameStep] == 0)
+        gameTask.innerText = "Задание: выбрать синонимы"
+    if (gameOrderArray[currentGameStep] == 1)
+        gameTask.innerText = "Задание: выбрать ассоциации"
+    if (gameOrderArray[currentGameStep] == 2)
+        gameTask.innerText = "Задание: выбрать антонимы"
 }
 
 // function hidePointsCounter() 
