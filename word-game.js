@@ -48,7 +48,7 @@ const pointsIncreaserHard = 200;  // прирост/уменьшение очк�
 const losePenalty = 1000;    // штраф за проигрыш
 const digitsShowInterval = 2000;
 var username;   // Имя пользователя
-var digitOnScreen;
+var digitOnScreen;  // Текущая цифра на экране
 
 function checkName()
 {
@@ -80,6 +80,20 @@ function configure()
     createGlobalPoints();
     createPointsCounter();
     createGameTask();
+    startGame();
+}
+
+async function startNextGame()
+{
+    clearInterval(currentTimerId);
+    currentGameStep++;
+    if (currentGameStep > 2)    // Зацикливаю игру
+        currentGameStep = 0;
+
+    document.getElementById("resultContainer").style.display = "flex";
+    resultContainer.innerHTML = "Вы победили и заработали " + currentUserPoints + " очков";
+    await wait(2000);
+    document.getElementById("resultContainer").style.display = "none";
     startGame();
 }
 
@@ -147,19 +161,6 @@ function hideShowDigits()
     setTimeout(checkForWin, digitsShowInterval*randomNumbers.length, spawnedPhrases.length);
 }
 
-function checkForWin(startSpawnedPhrasesNumber)
-{
-    if (spawnedPhrases.length == startSpawnedPhrasesNumber)
-    {
-        lose();
-    }
-    else
-    {
-        updateScore();
-        startNextGame();
-    }
-}
-
 function showDigit(phrase)
 {
     digitOnScreen = phrase.element.innerText;
@@ -171,52 +172,16 @@ function hideDigit(phrase)
     phrase.element.style.display = "none";
 }
 
-function spawnPhrases(dictionary) // принимает массив со словами из-за разных игр
+function checkForWin(startSpawnedPhrasesNumber)
 {
-    let positionTop = 0;
-    let positionTopIncreaser = 6;
-    for (let i = 0; i < Object.keys(dictionary).length * 2; i++)
+    if (spawnedPhrases.length == startSpawnedPhrasesNumber)
     {
-        let phraseElement = getPhraseElement(positionTop);
-        let phrase = new Phrase(phraseElement);
-        spawnedPhrases.push(phrase);
-        dynamicZoneElement.appendChild(phraseElement);
-        positionTop += positionTopIncreaser;
-    }
-
-    let counter = 0;
-    let randomNumbers = generateArrayRandomNumbers(0, spawnedPhrases.length - 1)   // Для выбора рандомной фразы
-    for (const [key, value] of Object.entries(dictionary))  // Устанавливаю текст фразы
-    {
-        spawnedPhrases[randomNumbers[counter++]].setText(key);
-        spawnedPhrases[randomNumbers[counter++]].setText(value);
-    }
-}
-
-function chooseGameDictionary()
-{
-    if (currentGameStep == 0)
-        return synonymsDictionary;
-    else if (currentGameStep == 1)
-        return digitsArray;
-    else if (currentGameStep == 2)
-        return associationsDictionary;
-
-    return 0;
-}
-
-function onPhraseClick(phraseElement) 
-{
-    let clickedPhrase = spawnedPhrases.find(phrase => phrase.element == phraseElement);
-    clickedPhrase.changeColor(clickedColor);
-    if (firstClickedPhrase == null)
-    {
-        firstClickedPhrase = clickedPhrase;
+        lose();
     }
     else
     {
-        secondClickedPhrase = clickedPhrase;
-        compareClickedPhrases();
+        updateScore();
+        startNextGame();
     }
 }
 
@@ -244,22 +209,38 @@ document.addEventListener('keydown', function(event)
     }
 });
 
-// async function sortPhrase(phraseToSort) 
-// {
+function spawnPhrases(dictionary) // принимает массив со словами из-за разных игр
+{
+    let positionTop = 0;
+    let positionTopIncreaser = 6;
+    for (let i = 0; i < Object.keys(dictionary).length * 2; i++)
+    {
+        let phraseElement = getPhraseElement(positionTop);
+        let phrase = new Phrase(phraseElement);
+        spawnedPhrases.push(phrase);
+        dynamicZoneElement.appendChild(phraseElement);
+        positionTop += positionTopIncreaser;
+    }
 
-//     if (phraseToSort.number % 2 == 0) 
-//     {
-//         translate(phraseToSort.element, 50, phraseToSort.element.y);
-//     } else 
-//     {
-//         translate(phraseToSort.element, dynamicZoneElement.getBoundingClientRect().right - dynamicZoneElement.getBoundingClientRect().left - 50, phraseToSort.element.y);
-//     }
-//     wait(25000);
-//     if (spawnedPhrases.length > 0)
-//         lose();
-//     else
-//         startNextGame();
-// }
+    let counter = 0;
+    let randomNumbers = generateArrayRandomNumbers(0, spawnedPhrases.length - 1)   // Для выбора рандомной фразы
+    for (const [key, value] of Object.entries(dictionary))  // Устанавливаю текст фразы
+    {
+        spawnedPhrases[randomNumbers[counter++]].setText(key);
+        spawnedPhrases[randomNumbers[counter++]].setText(value);
+    }
+}
+
+function getPhraseElement(positionTop) 
+{
+    let phraseElement = document.createElement("div");
+    phraseElement.setAttribute("class", "phrase");
+    phraseElement.style.top = `${positionTop}%`;
+    phraseElement.style.left = `${Math.random() * 85}%`;
+    phraseElement.style.backgroundColor = unclickedColor;
+    phraseElement.setAttribute("onClick", "onPhraseClick(this)");
+    return phraseElement;
+}
 
 function compareClickedPhrases() 
 {
@@ -294,6 +275,38 @@ function compareClickedPhrases()
     }
 }
 
+function onPhraseClick(phraseElement) 
+{
+    let clickedPhrase = spawnedPhrases.find(phrase => phrase.element == phraseElement);
+    clickedPhrase.changeColor(clickedColor);
+    if (firstClickedPhrase == null)
+    {
+        firstClickedPhrase = clickedPhrase;
+    }
+    else
+    {
+        secondClickedPhrase = clickedPhrase;
+        compareClickedPhrases();
+    }
+}
+
+// async function sortPhrase(phraseToSort) 
+// {
+
+//     if (phraseToSort.number % 2 == 0) 
+//     {
+//         translate(phraseToSort.element, 50, phraseToSort.element.y);
+//     } else 
+//     {
+//         translate(phraseToSort.element, dynamicZoneElement.getBoundingClientRect().right - dynamicZoneElement.getBoundingClientRect().left - 50, phraseToSort.element.y);
+//     }
+//     wait(25000);
+//     if (spawnedPhrases.length > 0)
+//         lose();
+//     else
+//         startNextGame();
+// }
+
 function addPoints(points)
 {
     currentUserPoints += points;
@@ -320,37 +333,12 @@ function updateScore()
     localStorage.setItem('usersScores', JSON.stringify(usersScores));
 }
 
-async function startNextGame()
-{
-    clearInterval(currentTimerId);
-    currentGameStep++;
-    if (currentGameStep > 2)    // Зацикливаю игру
-        currentGameStep = 0;
-
-    document.getElementById("resultContainer").style.display = "flex";
-    resultContainer.innerHTML = "Вы победили и заработали " + currentUserPoints + " очков";
-    await wait(2000);
-    document.getElementById("resultContainer").style.display = "none";
-    startGame();
-}
-
 function clearClickedPhrases()
 {
     firstClickedPhrase.changeColor(unclickedColor);
     secondClickedPhrase.changeColor(unclickedColor);
     firstClickedPhrase = null;
     secondClickedPhrase = null;
-}
-
-function getPhraseElement(positionTop) 
-{
-    let phraseElement = document.createElement("div");
-    phraseElement.setAttribute("class", "phrase");
-    phraseElement.style.top = `${positionTop}%`;
-    phraseElement.style.left = `${Math.random() * 85}%`;
-    phraseElement.style.backgroundColor = unclickedColor;
-    phraseElement.setAttribute("onClick", "onPhraseClick(this)");
-    return phraseElement;
 }
 
 class Phrase 
