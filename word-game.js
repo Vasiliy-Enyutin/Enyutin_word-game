@@ -9,22 +9,25 @@ const synonymsDictionary =
     "Выговор": "Порицание"
 };
 
-const associationsDictionary = 
-{
-    "Тарелка": "Посуда",
-    "Корабль": "Море",
-    "Школа": "Урок",
-    "Подсолнух": "Жёлтый",
-    "Овощ": "Морковка"
-};
-
 const antonymsDictionary = 
 {
     "Мир": "Война",
     "Тепло": "Холодно",
     "Свет": "Тьма",
     "Громкий": "Тихий",
-    "Мало": "Много"
+    "Мало": "Много",
+    "Большой":"Маленький"
+};
+
+const associationsDictionary = 
+{
+    "Тарелка": "Посуда",
+    "Корабль": "Море",
+    "Школа": "Урок",
+    "Подсолнух": "Жёлтый",
+    "Овощ": "Морковка",
+    "Штаны": "Одежда",
+    "Пряжа": "Вязание"
 };
 
 var usersScores = {};
@@ -44,10 +47,11 @@ var secondClickedPhrase;    // вторая нажатая фраза
 var globalPointsContainer;           // контейнер для общего количества очков
 var pointsCounterContainer;          // контейнер для счётчика очков
 var gameTaskContainer;               // контейнер для хранения задания
+var resultContainer;
 var globalUserPoints = 0;     // сумма очков пользователя за всё время
 var currentUserPoints = 0;  // текущее количество очков пользователя за одну игру
 const pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
-const losePenalty = 500;    // штраф за проигрыш
+const losePenalty = 1000;    // штраф за проигрыш
 var username;   // Имя пользователя
 
 function checkName()
@@ -60,7 +64,7 @@ function checkName()
     }
     else
     {
-        alert("Введите другое имя");
+        document.getElementById("incorrectUsername").innerHTML = "Введите другое имя";
     }
 }
 
@@ -71,12 +75,12 @@ function configure()
         usersScores = tempUsersScores;
 
     username = localStorage.getItem('currentUsername');
-    gameOrderArray = generateArrayRandomNumbers(0, 2);
     dynamicZoneElement = document.getElementById("dynamicZone");
     containerGui = document.getElementById("containerGUI")
     globalPointsContainer = document.getElementById("globalPointsContainer")
     pointsCounterContainer = document.getElementById("pointsCounterContainer")
     gameTaskContainer = document.getElementById("gameTaskContainer")
+    resultContainer = document.getElementById("resultContainer");
     createGlobalPoints();
     createPointsCounter();
     createGameTask();
@@ -100,12 +104,12 @@ function startGame()
 
 function chooseGameDictionary()
 {
-    if (gameOrderArray[currentGameStep] == 0)
+    if (currentGameStep == 0)
         return synonymsDictionary;
-    else if (gameOrderArray[currentGameStep] == 1)
-        return associationsDictionary;
-    else if (gameOrderArray[currentGameStep] == 2)
+    else if (currentGameStep == 1)
         return antonymsDictionary;
+    else if (currentGameStep == 2)
+        return associationsDictionary;
 
     return 0;
 }
@@ -128,7 +132,7 @@ function onPhraseClick(phraseElement)
 function spawnPhrases(dictionary) // принимает массив со словами из-за разных игр
 {
     let positionTop = 0;
-    let positionTopIncreaser = 8;
+    let positionTopIncreaser = 6;
     for (let i = 0; i < Object.keys(dictionary).length * 2; i++)
     {
         let phraseElement = getPhraseElement(positionTop);
@@ -214,8 +218,10 @@ async function startNextGame()
     if (currentGameStep > 2)    // Зацикливаю игру
         currentGameStep = 0;
 
-    await wait(100);
-    alert("Вы победили и заработали " + currentUserPoints + " очков!");
+    document.getElementById("resultContainer").style.display = "flex";
+    resultContainer.innerHTML = "Вы победили и заработали " + currentUserPoints + " очков";
+    await wait(2000);
+    document.getElementById("resultContainer").style.display = "none";
     startGame();
 }
 
@@ -286,12 +292,12 @@ function createGameTask()
 
 function updateGameTask()
 {
-    if (gameOrderArray[currentGameStep] == 0)
+    if (currentGameStep == 0)
         gameTaskContainer.innerText = "Задание: выбрать синонимы"
-    if (gameOrderArray[currentGameStep] == 1)
-        gameTaskContainer.innerText = "Задание: выбрать ассоциации"
-    if (gameOrderArray[currentGameStep] == 2)
+    else if (currentGameStep == 1)
         gameTaskContainer.innerText = "Задание: выбрать антонимы"
+    else if (currentGameStep == 2)
+        gameTaskContainer.innerText = "Задание: выбрать ассоциации"
 }
 
 function exit()
@@ -353,6 +359,12 @@ function showRatingTable()
         firstSpan.innerHTML = '-';
 }
 
+function clearBord()
+{
+    spawnedPhrases.find(phrase => phrase.element.remove());
+    spawnedPhrases.splice(0, spawnedPhrases.length);
+}
+
 // Генерация случайных неповторяющихся чисел в заданном промежутке
 function generateArrayRandomNumbers(min, max)
 {
@@ -372,6 +384,18 @@ function generateArrayRandomNumbers(min, max)
     return arrayRandomNumbers;
 }
 
+async function lose()
+{
+    document.getElementById("resultContainer").style.display = "flex";
+    resultContainer.innerHTML = "Вы побпроиграли и теряете " + losePenalty + " очков";
+    await wait(2000);
+    document.getElementById("resultContainer").style.display = "none";
+    currentUserPoints -= losePenalty;
+    updateScore();
+    clearBord();
+    startGame();
+}
+
 // Таймер
 function times(numb, int_id) 
 {
@@ -379,10 +403,7 @@ function times(numb, int_id)
   if (_ <= 0) 
   {
     clearInterval(int_id);
-    alert("Ты проиграл. -500 очков. Нажми 'ОК', чтобы начать заново");
-    currentUserPoints -= losePenalty;
-    updateScore();
-    document.location.href = "word-game.html";
+    lose();
   }
   return "Оставшееся время: " + _ + " секунд";
 }
