@@ -9,15 +9,7 @@ const synonymsDictionary =
     "Выговор": "Порицание"
 };
 
-const antonymsDictionary = 
-{
-    "Мир": "Война",
-    "Тепло": "Холодно",
-    "Свет": "Тьма",
-    "Громкий": "Тихий",
-    "Мало": "Много",
-    "Большой":"Маленький"
-};
+const digitsArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 
 const associationsDictionary = 
 {
@@ -50,9 +42,13 @@ var gameTaskContainer;               // контейнер для хранени
 var resultContainer;
 var globalUserPoints = 0;     // сумма очков пользователя за всё время
 var currentUserPoints = 0;  // текущее количество очков пользователя за одну игру
-const pointsIncreaser = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
+const pointsIncreaserEasy = 100;  // прирост/уменьшение очков за правильный/неправильный ответ
+const pointsIncreaserMedium = 150;  // прирост/уменьшение очков за правильный/неправильный ответ
+const pointsIncreaserHard = 200;  // прирост/уменьшение очков за правильный/неправильный ответ
 const losePenalty = 1000;    // штраф за проигрыш
+const digitsShowInterval = 2000;
 var username;   // Имя пользователя
+var digitOnScreen;
 
 function checkName()
 {
@@ -94,39 +90,85 @@ function startGame()
     else
         globalUserPoints = 0;
     updateGlobalPoints();
-    currentGameDictionary = chooseGameDictionary();
-    spawnPhrases(currentGameDictionary);
+
+    chooseGame();
+    
     updateGameTask();
     currentUserPoints = 0;
     updatePointsCounter();
-    interval("timer", timeLimitInSeconds);
 }
 
-function chooseGameDictionary()
+function chooseGame()
 {
     if (currentGameStep == 0)
-        return synonymsDictionary;
+    {
+        currentGameDictionary = synonymsDictionary;
+        spawnPhrases(currentGameDictionary);
+        interval("timer", timeLimitInSeconds);
+    }
     else if (currentGameStep == 1)
-        return antonymsDictionary;
-    else if (currentGameStep == 2)
-        return associationsDictionary;
-
-    return 0;
+    {
+        currentGameDictionary = digitsArray;
+        spawnDigits(currentGameDictionary);
+        hideShowDigits();
+    }
 }
 
-function onPhraseClick(phraseElement) 
+function spawnDigits(arr)
 {
-    let clickedPhrase = spawnedPhrases.find(phrase => phrase.element == phraseElement);
-    clickedPhrase.changeColor(clickedColor);
-    if (firstClickedPhrase == null)
+    let positionTop = 0;
+    let positionTopIncreaser = 6;
+    for (let i = 0; i < arr.length; i++)
     {
-        firstClickedPhrase = clickedPhrase;
+        let phraseElement = getPhraseElement(positionTop);
+        let phrase = new Phrase(phraseElement);
+        spawnedPhrases.push(phrase);
+        dynamicZoneElement.appendChild(phraseElement);
+        positionTop += positionTopIncreaser;
+    }
+
+    let counter = 0;
+    let randomNumbers = generateArrayRandomNumbers(0, spawnedPhrases.length - 1)   // Для выбора рандомной фразы
+    for (let digit of arr)  // Устанавливаю текст фразы
+    {
+        spawnedPhrases[randomNumbers[counter]].element.style.display = "none";
+        spawnedPhrases[randomNumbers[counter++]].setText(digit);
+    }
+}
+
+function hideShowDigits()
+{
+    let randomNumbers = generateArrayRandomNumbers(0, spawnedPhrases.length - 1);
+    for (let i=0; i<randomNumbers.length; i++)
+    {
+        setTimeout(showDigit, digitsShowInterval*i, spawnedPhrases[randomNumbers[i]])
+        setTimeout(hideDigit, digitsShowInterval*i+digitsShowInterval, spawnedPhrases[randomNumbers[i]])
+    }
+    setTimeout(checkForWin, digitsShowInterval*randomNumbers.length, spawnedPhrases.length);
+}
+
+function checkForWin(startSpawnedPhrasesNumber)
+{
+    if (spawnedPhrases.length == startSpawnedPhrasesNumber)
+    {
+        lose();
     }
     else
     {
-        secondClickedPhrase = clickedPhrase;
-        compareClickedPhrases();
+        updateScore();
+        startNextGame();
     }
+}
+
+function showDigit(phrase)
+{
+    digitOnScreen = phrase.element.innerText;
+    phrase.element.style.display = "flex";
+}
+
+function hideDigit(phrase)
+{
+    phrase.element.style.display = "none";
 }
 
 function spawnPhrases(dictionary) // принимает массив со словами из-за разных игр
@@ -151,6 +193,74 @@ function spawnPhrases(dictionary) // принимает массив со сло
     }
 }
 
+function chooseGameDictionary()
+{
+    if (currentGameStep == 0)
+        return synonymsDictionary;
+    else if (currentGameStep == 1)
+        return digitsArray;
+    else if (currentGameStep == 2)
+        return associationsDictionary;
+
+    return 0;
+}
+
+function onPhraseClick(phraseElement) 
+{
+    let clickedPhrase = spawnedPhrases.find(phrase => phrase.element == phraseElement);
+    clickedPhrase.changeColor(clickedColor);
+    if (firstClickedPhrase == null)
+    {
+        firstClickedPhrase = clickedPhrase;
+    }
+    else
+    {
+        secondClickedPhrase = clickedPhrase;
+        compareClickedPhrases();
+    }
+}
+
+// Нажатие клавиши для игры с исчезающими цифрами
+document.addEventListener('keydown', function(event) 
+{
+    if 
+    (
+        (event.code == 'Digit0' && digitOnScreen == 0) || (event.code == 'Digit1' && digitOnScreen == 1) ||
+        (event.code == 'Digit2' && digitOnScreen == 2) || (event.code == 'Digit3' && digitOnScreen == 3) ||
+        (event.code == 'Digit4' && digitOnScreen == 4) || (event.code == 'Digit5' && digitOnScreen == 5) ||
+        (event.code == 'Digit6' && digitOnScreen == 6) || (event.code == 'Digit7' && digitOnScreen == 7) ||
+        (event.code == 'Digit8' && digitOnScreen == 8) || (event.code == 'Digit9' && digitOnScreen == 9)
+    )
+    {
+        for (let i = 0; i < spawnedPhrases.length; i++)
+        {
+            if (spawnedPhrases[i].element.innerText == digitOnScreen)
+            {
+                spawnedPhrases[i].changeColor(clickedColor);
+                setTimeout(deletePhrase, 1000, spawnedPhrases[i]);
+                addPoints(pointsIncreaserMedium);
+            }
+        }
+    }
+});
+
+// async function sortPhrase(phraseToSort) 
+// {
+
+//     if (phraseToSort.number % 2 == 0) 
+//     {
+//         translate(phraseToSort.element, 50, phraseToSort.element.y);
+//     } else 
+//     {
+//         translate(phraseToSort.element, dynamicZoneElement.getBoundingClientRect().right - dynamicZoneElement.getBoundingClientRect().left - 50, phraseToSort.element.y);
+//     }
+//     wait(25000);
+//     if (spawnedPhrases.length > 0)
+//         lose();
+//     else
+//         startNextGame();
+// }
+
 function compareClickedPhrases() 
 {
     let firstPhraseText = firstClickedPhrase.element.innerText;
@@ -167,44 +277,43 @@ function compareClickedPhrases()
 
     if (matched == true)
     {
-        currentUserPoints += pointsIncreaser;
-        updatePointsCounter();
-        deleteMatchedPhrases();
+        addPoints(pointsIncreaserEasy);
+        deletePhrase(firstClickedPhrase);
+        deletePhrase(secondClickedPhrase);
+        clearClickedPhrases();
+        if (spawnedPhrases.length == 0)
+        {
+            updateScore();
+            startNextGame();
+        }
     }
     else
     {
-        currentUserPoints -= pointsIncreaser;
-        updatePointsCounter();
+        addPoints(-pointsIncreaserEasy);
         clearClickedPhrases();
     }
 }
 
-function deleteMatchedPhrases()
+function addPoints(points)
+{
+    currentUserPoints += points;
+    updatePointsCounter();
+}
+
+function deletePhrase(phrase)
 {
     // Удаление совпадающих фраз из spawnedPhrases
-    let index = spawnedPhrases.indexOf(firstClickedPhrase);
-    spawnedPhrases.splice(index, 1);
-    index = spawnedPhrases.indexOf(secondClickedPhrase);
+    let index = spawnedPhrases.indexOf(phrase);
     spawnedPhrases.splice(index, 1);
 
     // Удаление div элемента фраз (заметно пользователю)
-    spawnedPhrases.find(phrase => phrase.element == firstClickedPhrase);
-    firstClickedPhrase.element.remove();
-    secondClickedPhrase.element.remove();
-
-    clearClickedPhrases();
-
-    if (spawnedPhrases.length == 0)
-    {
-        updateScore();
-        startNextGame();
-    }
+    phrase.element.remove();
 }
 
 function updateScore()
 {
-    username = localStorage.getItem('currentUsername');
     globalUserPoints += currentUserPoints;
+    username = localStorage.getItem('currentUsername');
     localStorage.setItem(username + 'globalUserPoints', globalUserPoints)
 
     usersScores[username] = globalUserPoints;
@@ -311,6 +420,11 @@ function openRatingTable()
     document.location.href = "rating.html";
 }
 
+function toGame()
+{
+    document.location.href = "word-game.html";
+}
+
 function showRatingTable()
 {
     firstSpan = document.getElementById("first");
@@ -387,10 +501,10 @@ function generateArrayRandomNumbers(min, max)
 async function lose()
 {
     document.getElementById("resultContainer").style.display = "flex";
-    resultContainer.innerHTML = "Вы побпроиграли и теряете " + losePenalty + " очков";
+    resultContainer.innerHTML = "Вы проиграли и теряете " + losePenalty + " очков";
     await wait(2000);
     document.getElementById("resultContainer").style.display = "none";
-    currentUserPoints -= losePenalty;
+    addPoints(-losePenalty);
     updateScore();
     clearBord();
     startGame();
@@ -411,6 +525,7 @@ function times(numb, int_id)
 function interval(int_id, numb) 
 {
   var span = document.getElementById(int_id);
+  span.innerHTML = "Оставшееся время: " + numb + " секунд";
   currentTimerId = setInterval(function() 
   {
     span.innerHTML = times(numb--, currentTimerId);
@@ -426,3 +541,7 @@ function getKeyByValue(object, value)
 {
     return Object.keys(object).find(key => object[key] === value);
 }
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
