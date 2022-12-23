@@ -1,5 +1,6 @@
 const clickedColor = "#f6bf6d";
 const unclickedColor = "white";
+const wrongColor = "red";
 const synonymsDictionary = 
 {
     "Светило": "Солнце",
@@ -11,21 +12,24 @@ const synonymsDictionary =
 
 const digitsArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 
-const associationsDictionary = 
+const nounGameDictionary = 
 {
-    "Тарелка": "Посуда",
-    "Корабль": "Море",
-    "Школа": "Урок",
-    "Подсолнух": "Жёлтый",
-    "Овощ": "Морковка",
-    "Штаны": "Одежда",
-    "Пряжа": "Вязание"
+    "Тарелка": 1,
+    "Корабль": 1,
+    "Школа": 1,
+    "Бежать": 0,
+    "Овощ": 1,
+    "Штаны": 1,
+    "Вязать": 0,
+    "Угрюмый": 0
 };
 
 var usersScores = {};
 
 // Таймер
 const timeLimitInSeconds = 25;
+const timeLimitInSecondsMedium = 20;
+const timeLimitInSecondsHard = 20;
 var currentTimerId;
 
 var currentGameStep = 0;    // какая по счёту сейчас игра заупщена (0, 1 или 2)
@@ -49,6 +53,9 @@ const losePenalty = 1000;    // штраф за проигрыш
 const digitsShowInterval = 2000;
 var username;   // Имя пользователя
 var digitOnScreen;  // Текущая цифра на экране
+var foundNounsNumber = 0;
+var totalNounsNumber = 0;
+var clickedPhrasesNumber = 0;
 
 function checkName()
 {
@@ -62,6 +69,18 @@ function checkName()
     {
         document.getElementById("incorrectUsername").innerHTML = "Введите другое имя";
     }
+}
+
+async function startNextGame()
+{
+    clearInterval(currentTimerId);
+    currentGameStep++;
+
+    document.getElementById("resultContainer").style.display = "flex";
+    resultContainer.innerHTML = "Вы победили и заработали " + currentUserPoints + " очков";
+    await wait(2000);
+    document.getElementById("resultContainer").style.display = "none";
+    startGame();
 }
 
 function configure() 
@@ -83,22 +102,9 @@ function configure()
     startGame();
 }
 
-async function startNextGame()
-{
-    clearInterval(currentTimerId);
-    currentGameStep++;
-    if (currentGameStep > 2)    // Зацикливаю игру
-        currentGameStep = 0;
-
-    document.getElementById("resultContainer").style.display = "flex";
-    resultContainer.innerHTML = "Вы победили и заработали " + currentUserPoints + " очков";
-    await wait(2000);
-    document.getElementById("resultContainer").style.display = "none";
-    startGame();
-}
-
 function startGame()
 {
+    clearInterval(currentTimerId);
     if (localStorage.getItem(username + 'globalUserPoints') != null)
         globalUserPoints = +localStorage.getItem(username + 'globalUserPoints')
     else
@@ -125,6 +131,112 @@ function chooseGame()
         currentGameDictionary = digitsArray;
         spawnDigits(currentGameDictionary);
         hideShowDigits();
+        interval("timer", timeLimitInSecondsMedium);
+    }
+    else if (currentGameStep == 2)
+    {
+        currentGameDictionary = nounGameDictionary;
+        spawnRotatedPhrases(currentGameDictionary);
+        interval("timer", timeLimitInSecondsHard)
+    }
+}
+
+function spawnRotatedPhrases(dictionary)
+{
+    let positionTop = 0;
+    let positionTopIncreaser = 10;
+    for (let i = 0; i < Object.keys(dictionary).length; i++)
+    {
+        let phraseElement = getPhraseElement(positionTop);
+        let phrase = new Phrase(phraseElement);
+        spawnedPhrases.push(phrase);
+        dynamicZoneElement.appendChild(phraseElement);
+        positionTop += positionTopIncreaser;
+    }
+
+    let counter = 0;
+    let phrasesChangePositionInterval = 5;   // сек
+    let randomNumbers = generateArrayRandomNumbers(0, spawnedPhrases.length - 1)   // Для выбора рандомной фразы
+    for (let key of Object.keys(dictionary))  // Устанавливаю текст фразы
+    {
+        if (dictionary[key] == 1)
+        {
+            totalNounsNumber++;
+        }
+        spawnedPhrases[randomNumbers[counter++]].setText(key);
+    }
+    // Меняем позицию слов
+    let multiplier = 0;
+    for (let i = 0; i < timeLimitInSecondsHard / phrasesChangePositionInterval / 2; i++)
+    {
+        setTimeout(movePhrasesLeft, 1000 * phrasesChangePositionInterval * multiplier);
+        multiplier++;
+        setTimeout(movePhrasesRight, 1000 * phrasesChangePositionInterval * multiplier);
+        multiplier++;
+    }
+    setTimeout(checkForWinInNounGame, timeLimitInSecondsHard * 1000);
+    rotatePhrases();
+}
+
+function rotatePhrases()
+{
+    let randomRotate;
+    for (let phrase of spawnedPhrases)
+    {
+        randomRotate = getRandomInt(360);
+        phrase.element.style.transform = 'rotate(' + randomRotate + 'deg)';
+    }
+}
+
+function movePhrasesRight()
+{
+    rotatePhrases();
+    for (let phrase of spawnedPhrases)
+    {
+        translate(phrase.element, dynamicZoneElement.getBoundingClientRect().right - 
+        dynamicZoneElement.getBoundingClientRect().left - 100, phrase.element.y);
+    }
+}
+
+function movePhrasesLeft()
+{
+    rotatePhrases();
+    for (let phrase of spawnedPhrases)
+    {
+        translate(phrase.element, 25, phrase.element.y);
+    }
+}
+
+function checkForNoun(clickedPhrase)
+{
+    clickedPhrasesNumber++;
+    if (nounGameDictionary[clickedPhrase.element.innerText] == 1)
+    {
+        foundNounsNumber++;
+        addPoints(pointsIncreaserHard);
+    }
+    else
+    {
+        clickedPhrase.changeColor(wrongColor);
+        addPoints(-pointsIncreaserHard);
+    }
+}
+
+function checkForWinInNounGame()
+{
+    if (clickedPhrasesNumber > totalNounsNumber)
+    {
+        lose();
+    }
+    else if (foundNounsNumber == totalNounsNumber)
+    {
+        updateScore();
+        clearBord();
+        startNextGame();
+    }
+    else
+    {
+        lose();
     }
 }
 
@@ -158,7 +270,7 @@ function hideShowDigits()
         setTimeout(showDigit, digitsShowInterval*i, spawnedPhrases[randomNumbers[i]])
         setTimeout(hideDigit, digitsShowInterval*i+digitsShowInterval, spawnedPhrases[randomNumbers[i]])
     }
-    setTimeout(checkForWin, digitsShowInterval*randomNumbers.length, spawnedPhrases.length);
+    setTimeout(checkForWinInDigitGame, digitsShowInterval*randomNumbers.length, spawnedPhrases.length);
 }
 
 function showDigit(phrase)
@@ -172,7 +284,7 @@ function hideDigit(phrase)
     phrase.element.style.display = "none";
 }
 
-function checkForWin(startSpawnedPhrasesNumber)
+function checkForWinInDigitGame(startSpawnedPhrasesNumber)
 {
     if (spawnedPhrases.length == startSpawnedPhrasesNumber)
     {
@@ -181,6 +293,7 @@ function checkForWin(startSpawnedPhrasesNumber)
     else
     {
         updateScore();
+        clearBord();
         startNextGame();
     }
 }
@@ -279,33 +392,23 @@ function onPhraseClick(phraseElement)
 {
     let clickedPhrase = spawnedPhrases.find(phrase => phrase.element == phraseElement);
     clickedPhrase.changeColor(clickedColor);
-    if (firstClickedPhrase == null)
+    if (currentGameStep == 0)
     {
-        firstClickedPhrase = clickedPhrase;
+        if (firstClickedPhrase == null)
+        {
+            firstClickedPhrase = clickedPhrase;
+        }
+        else
+        {
+            secondClickedPhrase = clickedPhrase;
+            compareClickedPhrases();
+        }
     }
-    else
+    else if (currentGameStep == 2)
     {
-        secondClickedPhrase = clickedPhrase;
-        compareClickedPhrases();
+        checkForNoun(clickedPhrase);
     }
 }
-
-// async function sortPhrase(phraseToSort) 
-// {
-
-//     if (phraseToSort.number % 2 == 0) 
-//     {
-//         translate(phraseToSort.element, 50, phraseToSort.element.y);
-//     } else 
-//     {
-//         translate(phraseToSort.element, dynamicZoneElement.getBoundingClientRect().right - dynamicZoneElement.getBoundingClientRect().left - 50, phraseToSort.element.y);
-//     }
-//     wait(25000);
-//     if (spawnedPhrases.length > 0)
-//         lose();
-//     else
-//         startNextGame();
-// }
 
 function addPoints(points)
 {
@@ -392,9 +495,9 @@ function updateGameTask()
     if (currentGameStep == 0)
         gameTaskContainer.innerText = "Задание: выбрать синонимы"
     else if (currentGameStep == 1)
-        gameTaskContainer.innerText = "Задание: выбрать антонимы"
+        gameTaskContainer.innerText = "Задание: нажимать кнопки на клавиатуре в соответствии с показанными на экране символами"
     else if (currentGameStep == 2)
-        gameTaskContainer.innerText = "Задание: выбрать ассоциации"
+        gameTaskContainer.innerText = "Задание: выбрать ТОЛЬКО СУЩЕСТВИТЕЛЬНЫЕ"
 }
 
 function exit()
@@ -463,6 +566,7 @@ function showRatingTable()
 
 function clearBord()
 {
+    console.log(spawnedPhrases);
     spawnedPhrases.find(phrase => phrase.element.remove());
     spawnedPhrases.splice(0, spawnedPhrases.length);
 }
@@ -492,6 +596,7 @@ async function lose()
     resultContainer.innerHTML = "Вы проиграли и теряете " + losePenalty + " очков";
     await wait(2000);
     document.getElementById("resultContainer").style.display = "none";
+    currentUserPoints = 0;
     addPoints(-losePenalty);
     updateScore();
     clearBord();
@@ -504,8 +609,11 @@ function times(numb, int_id)
   var _ = numb;
   if (_ <= 0) 
   {
-    clearInterval(int_id);
-    lose();
+    if (currentGameStep == 0)
+    {
+        clearInterval(int_id);
+        lose();
+    }
   }
   return "Оставшееся время: " + _ + " секунд";
 }
@@ -530,6 +638,35 @@ function getKeyByValue(object, value)
     return Object.keys(object).find(key => object[key] === value);
 }
 
-function getRandomInt(max) {
+function getRandomInt(max) 
+{
     return Math.floor(Math.random() * max);
-  }
+}
+
+// Движение
+function translate( elem, x, y ) 
+{
+    var left = parseInt( css( elem, 'left' ), 10 ),
+        top = parseInt( css( elem, 'top' ), 10 ),
+        dx = left - x,
+        dy = top - y,
+        i = 1,
+        count = 20,
+        delay = 20;
+
+    function loop() 
+    {
+        if ( i >= count ) { return; }
+        i += 1;
+        elem.style.left = ( left - ( dx * i / count ) ).toFixed( 0 ) + 'px';
+        elem.style.top = ( top - ( dy * i / count ) ).toFixed( 0 ) + 'px';
+        setTimeout( loop, delay );
+    }
+
+    loop();
+}
+
+function css( element, property ) 
+{
+    return window.getComputedStyle( element, null ).getPropertyValue( property );
+}
